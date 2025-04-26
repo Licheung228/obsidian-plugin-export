@@ -1,0 +1,11 @@
+{
+	"id": "export-obsidian-notes",
+	"name": "export obsidian notes by tags",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "export obsidian notes by tags",
+	"author": "Obsidian",
+	"authorUrl": "https://obsidian.md",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
+}
