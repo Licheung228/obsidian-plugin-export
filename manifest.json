@@ -1,6 +1,6 @@
 {
-	"id": "export-obsidian-notes",
-	"name": "export obsidian notes by tags",
+	"id": "export-obsidian-publish-notes",
+	"name": "export obsidian publish notes by tags",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "export obsidian notes by tags",

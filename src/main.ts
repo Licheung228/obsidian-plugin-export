@@ -6,6 +6,7 @@ import {
 	Modal,
 	Setting,
 	Notice,
+	type CachedMetadata,
 } from "obsidian";
 import { existsSync, mkdirSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
@@ -15,7 +16,7 @@ import { u_fs_clearDirWithoutGit, u_path_isChild } from "./lib";
 export default class ExportPlugin extends Plugin {
 	async onload() {
 		this.addCommand({
-			id: "export-obsidian-notes",
+			id: "export-obsidian-publish-notes",
 			name: "导出笔记",
 			callback: () => {
 				this.activateView();
@@ -102,6 +103,30 @@ class ExportModal extends InputModal {
 			this.app.vault.adapter as FileSystemAdapter
 		).getBasePath();
 		this.setExportDirPath();
+
+		// 赋值默认导出地址
+		this.input2.defaultValue = ExportModal.DEFAULT_EXPORT_DIR;
+	}
+
+	checkTags(
+		metadataCache: CachedMetadata["frontmatter"] | null,
+		query: string
+	) {
+		if (!query || !metadataCache) return true;
+		// 是否匹配
+		const isMatch =
+			metadataCache?.frontmatter?.tags &&
+			metadataCache?.frontmatter?.tags.includes(query);
+		// 不匹配跳过
+		return isMatch;
+	}
+
+	checkExportDirExsit(exportDirName: string) {
+		const exportDir = isAbsolute(exportDirName)
+			? exportDirName
+			: resolve(this.vaultBasePath, exportDirName);
+		const isExist = existsSync(exportDir);
+		this.warningEl.style.display = isExist ? "block" : "none";
 	}
 
 	onOpen() {
@@ -111,14 +136,14 @@ class ExportModal extends InputModal {
 		this.warningEl.style.color = "red";
 		this.warningEl.style.display = "none";
 
+		// 检测是否存在
+		this.checkExportDirExsit(ExportModal.DEFAULT_EXPORT_DIR);
+
 		// 如果导出目录存在, 则显示警告
 		this.input2.addEventListener("input", (e: Event) => {
 			const { value } = e.target as HTMLInputElement;
-			const exportDir = isAbsolute(value)
-				? value
-				: resolve(this.vaultBasePath, value);
-			const isExist = existsSync(exportDir);
-			this.warningEl.style.display = isExist ? "block" : "none";
+			// 显示警告
+			this.checkExportDirExsit(value);
 		});
 	}
 
@@ -143,12 +168,16 @@ class ExportModal extends InputModal {
 			if (u_path_isChild(this.exportDir, originFilePath)) return;
 			// 获取头
 			const metadataCache = this.app.metadataCache.getFileCache(file);
-			// 是否匹配
-			const isMatch =
-				metadataCache?.frontmatter?.tags &&
-				metadataCache?.frontmatter?.tags.includes(query);
-			// 不匹配跳过
-			if (!isMatch) return;
+
+			// 如果不是 publish 文章则跳出
+			if (
+				!metadataCache?.frontmatter ||
+				!metadataCache.frontmatter?.publish
+			) {
+				return;
+			}
+			// 校验 tag
+			if (!this.checkTags(metadataCache.frontmatter, query)) return;
 			// 获取导出文件路径
 			const exportFilePath = resolve(this.exportDir, file.path);
 			// 如果不存在链接或者嵌入, 则直接把源文件复制到导出目录
@@ -192,7 +221,6 @@ class ExportModal extends InputModal {
 					return `${isEmbed ? "!" : ""}[${basename}](${_path})`;
 				}
 			);
-
 			// 写入导出文件
 			outputFile(exportFilePath, replaced);
 		});
