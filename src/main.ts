@@ -9,7 +9,7 @@ import {
 	type CachedMetadata,
 } from "obsidian";
 import { existsSync, mkdirSync } from "node:fs";
-import { isAbsolute, resolve } from "node:path";
+import { isAbsolute, resolve, extname } from "node:path";
 import { copy, outputFile } from "fs-extra";
 import { u_fs_clearDirWithoutGit, u_path_isChild } from "./lib";
 
@@ -179,7 +179,13 @@ class ExportModal extends InputModal {
 			// 校验 tag
 			if (!this.checkTags(metadataCache.frontmatter, query)) return;
 			// 获取导出文件路径
-			const exportFilePath = resolve(this.exportDir, file.path);
+			// 更改为 mdx 后缀
+			const suffix = extname(file.path);
+			console.log("%c Mark🔸 >>>", "color: red;", suffix);
+			const exportFilePath = resolve(
+				this.exportDir,
+				file.path.replace(suffix, ".mdx")
+			);
 			// 如果不存在链接或者嵌入, 则直接把源文件复制到导出目录
 			if (!metadataCache?.links && !metadataCache?.embeds) {
 				return copy(originFilePath, exportFilePath);
@@ -218,7 +224,7 @@ class ExportModal extends InputModal {
 					}
 					// 防止空格字符, 导致无法索引到正常的资源
 					const _path = isEmbed ? path.replace(/\s+/g, "%20") : path;
-					return `${isEmbed ? "!" : ""}[${basename}](${_path})`;
+					return `${isEmbed ? "!" : ""}[${basename}](/${_path})`;
 				}
 			);
 			// 写入导出文件
