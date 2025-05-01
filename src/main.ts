@@ -176,16 +176,18 @@ class ExportModal extends InputModal {
 			) {
 				return;
 			}
+
 			// 校验 tag
 			if (!this.checkTags(metadataCache.frontmatter, query)) return;
 			// 获取导出文件路径
 			// 更改为 mdx 后缀
 			const suffix = extname(file.path);
-			console.log("%c Mark🔸 >>>", "color: red;", suffix);
 			const exportFilePath = resolve(
 				this.exportDir,
 				file.path.replace(suffix, ".mdx")
 			);
+
+			// 外链资源不算metadataCache的链接/嵌入, 必须是 obsidian 本身语法才是, 放到 remark 去处理吧
 			// 如果不存在链接或者嵌入, 则直接把源文件复制到导出目录
 			if (!metadataCache?.links && !metadataCache?.embeds) {
 				return copy(originFilePath, exportFilePath);
@@ -213,7 +215,7 @@ class ExportModal extends InputModal {
 						);
 					// 如果没查到可能是文件被删掉了, 直接return即可
 					if (!linkPathDest) return "";
-					const { path, basename } = linkPathDest;
+					let { path, basename } = linkPathDest;
 					// todo 这里不合理, 不应当在替换动作中掺入其他副作用
 					if (isEmbed) {
 						// 处理 embed. 主要是图片资源, 把图片资源导出到根目录下
@@ -223,8 +225,8 @@ class ExportModal extends InputModal {
 						);
 					}
 					// 防止空格字符, 导致无法索引到正常的资源
-					const _path = isEmbed ? path.replace(/\s+/g, "%20") : path;
-					return `${isEmbed ? "!" : ""}[${basename}](/${_path})`;
+					path = isEmbed ? path.replace(/\s+/g, "%20") : path;
+					return `${isEmbed ? "!" : ""}[${basename}](/${path})`;
 				}
 			);
 			// 写入导出文件

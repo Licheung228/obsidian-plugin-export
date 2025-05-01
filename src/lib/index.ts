@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { isAbsolute, relative } from "node:path";
+import { isAbsolute, parse, relative } from "node:path";
 import { rimrafSync } from "rimraf";
 
 /**
@@ -18,6 +18,15 @@ export function u_path_isChild(parent: string, child: string) {
 		// 不是绝对路径
 		!isAbsolute(relativePath)
 	);
+}
+
+/**
+ * 获取文件名
+ * @param path 路径
+ * @returns 文件名
+ */
+export function u_path_getFilename(path: string) {
+	return parse(path).name;
 }
 
 /**
