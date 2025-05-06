@@ -164,8 +164,12 @@ class ExportModal extends InputModal {
 		this.app.vault.getFiles().forEach(async (file: TFile) => {
 			// 获取源文件路径
 			const originFilePath = resolve(this.vaultBasePath, file.path);
-			// 如果导出文件路径是导出目录的子目录, 则跳过
-			if (u_path_isChild(this.exportDir, originFilePath)) return;
+			// 如果导出文件路径是导出目录的子目录, 或者为特定名称的文件夹, 则跳过
+			if (
+				u_path_isChild(this.exportDir, originFilePath) ||
+				file.path.startsWith("__")
+			)
+				return;
 			// 获取头
 			const metadataCache = this.app.metadataCache.getFileCache(file);
 
